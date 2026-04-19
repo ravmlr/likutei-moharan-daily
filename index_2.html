@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Likutei Moharan">
+  <meta name="theme-color" content="#1a1510">
+  <title>Likutei Moharan · Daily Learning</title>
+  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%231a1510' width='100' height='100' rx='20'/><text x='50' y='62' text-anchor='middle' font-size='50'>📖</text></svg>">
+  <!-- Manifest for PWA -->
+  <script>
+    // Dynamically create manifest for PWA support
+    const manifest = {
+      name: "Likutei Moharan Daily",
+      short_name: "LM Daily",
+      start_url: ".",
+      display: "standalone",
+      background_color: "#f7f3ee",
+      theme_color: "#1a1510",
+      icons: []
+    };
+    const blob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
+    const link = document.createElement('link');
+    link.rel = 'manifest';
+    link.href = URL.createObjectURL(blob);
+    document.head.appendChild(link);
+  </script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { -webkit-text-size-adjust: 100%; }
+    body {
+      font-family: Georgia, 'Times New Roman', serif;
+      background: linear-gradient(180deg, #f7f3ee 0%, #ebe5db 100%);
+      color: #2c2416;
+      min-height: 100vh;
+      min-height: 100dvh;
+      -webkit-font-smoothing: antialiased;
+    }
+    #root { min-height: 100vh; min-height: 100dvh; }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #c9bfad; border-radius: 3px; }
+
+    /* Header */
+    .lm-header {
+      background: linear-gradient(135deg, #1a1510 0%, #2c2416 60%, #3d3222 100%);
+      color: #f0e8d8;
+      padding: 1.5rem 1rem 1rem;
+      text-align: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 2px 20px rgba(0,0,0,0.3);
+    }
+    .lm-header-inner { max-width: 600px; margin: 0 auto; }
+    .lm-title {
+      font-size: 2rem;
+      font-weight: 400;
+      letter-spacing: 0.05em;
+      direction: rtl;
+    }
+    .lm-subtitle {
+      font-size: 0.85rem;
+      margin-top: 0.3rem;
+      opacity: 0.7;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+    }
+    .lm-header-nav {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+      margin-top: 0.8rem;
+    }
+    .lm-nav-btn {
+      background: transparent;
+      border: 1px solid rgba(240,232,216,0.3);
+      color: #f0e8d8;
+      padding: 0.35rem 1rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 0.8rem;
+      transition: background 0.15s;
+    }
+    .lm-nav-btn:hover, .lm-nav-btn.active {
+      background: rgba(240,232,216,0.15);
+      border-color: rgba(240,232,216,0.5);
+    }
+
+    /* Main */
+    .lm-main { max-width: 600px; margin: 0 auto; padding: 1rem; }
+
+    /* Card */
+    .lm-card {
+      background: #fffcf5;
+      border-radius: 8px;
+      padding: 2rem 1.5rem;
+      text-align: center;
+      box-shadow: 0 1px 8px rgba(0,0,0,0.08);
+      margin-top: 1rem;
+    }
+    .lm-card-title { font-size: 1.3rem; font-weight: 600; margin-bottom: 0.8rem; }
+    .lm-card-text { font-size: 0.95rem; line-height: 1.6; color: #5a4e3c; margin-bottom: 0.8rem; }
+    .lm-card-small { font-size: 0.8rem; color: #8a7e6c; margin-top: 0.5rem; }
+    .lm-init-icon { font-size: 3rem; margin-bottom: 0.5rem; }
+
+    /* Buttons */
+    .lm-btn-primary {
+      background: #2c2416;
+      color: #f0e8d8;
+      border: none;
+      padding: 0.75rem 2rem;
+      border-radius: 6px;
+      font-size: 1rem;
+      font-family: inherit;
+      cursor: pointer;
+      margin-top: 1rem;
+      transition: background 0.2s;
+    }
+    .lm-btn-primary:hover { background: #3d3222; }
+    .lm-btn-primary.completed { background: #4a7c59; }
+    .lm-btn-reset {
+      background: transparent;
+      border: 1px solid #c9bfad;
+      color: #8a7e6c;
+      padding: 0.5rem 1.5rem;
+      border-radius: 4px;
+      font-size: 0.8rem;
+      font-family: inherit;
+      cursor: pointer;
+    }
+
+    /* Progress */
+    .lm-progress-outer {
+      height: 8px;
+      background: #e8e0d0;
+      border-radius: 4px;
+      overflow: hidden;
+      margin: 1rem 0;
+    }
+    .lm-progress-inner {
+      height: 100%;
+      background: linear-gradient(90deg, #8b7355, #c4a265);
+      border-radius: 4px;
+      transition: width 0.3s ease;
+    }
+    .lm-progress-label { font-size: 0.85rem; color: #8a7e6c; }
+
+    /* Stats */
+    .lm-stats { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
+    .lm-stat {
+      flex: 1;
+      background: #fffcf5;
+      border-radius: 8px;
+      padding: 0.8rem 0.5rem;
+      text-align: center;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+      display: flex;
+      flex-direction: column;
+    }
+    .lm-stat-num { font-size: 1.5rem; font-weight: 700; }
+    .lm-stat-label {
+      font-size: 0.7rem;
+      color: #8a7e6c;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-top: 0.2rem;
+    }
+
+    /* Today card */
+    .lm-today {
+      background: linear-gradient(135deg, #2c2416, #3d3222);
+      color: #f0e8d8;
+      border-radius: 10px;
+      padding: 1.2rem;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+      margin-bottom: 1.5rem;
+      transition: transform 0.1s;
+    }
+    .lm-today:active { transform: scale(0.98); }
+    .lm-today-label {
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      opacity: 0.7;
+      margin-bottom: 0.5rem;
+    }
+    .lm-today-torahs { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+    .lm-torah-chip {
+      background: rgba(240,232,216,0.15);
+      border: 1px solid rgba(240,232,216,0.25);
+      padding: 0.25rem 0.6rem;
+      border-radius: 4px;
+      font-size: 0.85rem;
+    }
+    .lm-today-action { margin-top: 0.6rem; font-size: 0.85rem; opacity: 0.6; }
+
+    /* Schedule list */
+    .lm-list-header {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #8a7e6c;
+      margin-bottom: 0.5rem;
+    }
+    .lm-schedule-list {
+      background: #fffcf5;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 1px 8px rgba(0,0,0,0.06);
+      max-height: 60vh;
+      overflow-y: auto;
+    }
+    .lm-day-row {
+      display: flex;
+      align-items: center;
+      padding: 0.6rem 0.8rem;
+      border-bottom: 1px solid #ede7db;
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+    .lm-day-row:hover { background: #f9f4ea; }
+    .lm-day-row.today { background: #f5eed8; border-left: 3px solid #c4a265; }
+    .lm-day-row.done { opacity: 0.5; }
+    .lm-day-left { width: 75px; flex-shrink: 0; }
+    .lm-day-num { font-size: 0.85rem; font-weight: 600; display: block; }
+    .lm-day-date { font-size: 0.7rem; color: #8a7e6c; display: block; }
+    .lm-day-center { flex: 1; font-size: 0.8rem; color: #5a4e3c; }
+    .lm-day-right { width: 30px; text-align: right; }
+    .lm-check { color: #4a7c59; font-weight: 700; font-size: 1.1rem; }
+    .lm-dot { color: #c4a265; font-size: 0.7rem; }
+
+    /* Reading */
+    .lm-reading-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+      background: #fffcf5;
+      border-radius: 8px;
+      padding: 0.5rem;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+    .lm-nav-arrow {
+      background: transparent;
+      border: 1px solid #d4cbb8;
+      color: #5a4e3c;
+      padding: 0.4rem 0.8rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 0.8rem;
+    }
+    .lm-nav-arrow:disabled { opacity: 0.3; cursor: default; }
+    .lm-reading-day { font-size: 0.85rem; font-weight: 600; }
+    .lm-reading-card {
+      background: #fffcf5;
+      border-radius: 8px;
+      padding: 1.5rem 1.2rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 1px 8px rgba(0,0,0,0.08);
+    }
+    .lm-reading-title { font-size: 1.2rem; font-weight: 600; margin-bottom: 0.3rem; }
+    .lm-sefaria-link {
+      font-size: 0.8rem;
+      color: #8b7355;
+      text-decoration: none;
+      display: inline-block;
+      margin-bottom: 1rem;
+    }
+    .lm-reading-body { line-height: 1.75; font-size: 1rem; color: #3a3020; }
+    .lm-reading-body p { margin-bottom: 0.8rem; }
+    .lm-reading-body i, .lm-reading-body em { font-style: italic; }
+    .lm-reading-body b, .lm-reading-body strong { font-weight: 700; }
+
+    /* Audio controls */
+    .lm-audio-bar {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      background: #fffcf5;
+      border-radius: 8px;
+      padding: 0.6rem 0.8rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+    }
+    .lm-audio-btn {
+      background: #2c2416;
+      color: #f0e8d8;
+      border: none;
+      padding: 0.45rem 1rem;
+      border-radius: 5px;
+      font-family: inherit;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .lm-audio-btn:hover { background: #3d3222; }
+    .lm-audio-stop { background: #6b5a45; }
+    .lm-audio-stop:hover { background: #7d6b55; }
+    .lm-speed-control {
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+      margin-left: auto;
+    }
+    .lm-speed-label {
+      font-size: 0.75rem;
+      color: #8a7e6c;
+      margin-right: 0.2rem;
+    }
+    .lm-speed-btn {
+      background: transparent;
+      border: 1px solid #d4cbb8;
+      color: #5a4e3c;
+      padding: 0.2rem 0.45rem;
+      border-radius: 3px;
+      font-family: inherit;
+      font-size: 0.7rem;
+      cursor: pointer;
+    }
+    .lm-speed-btn.active {
+      background: #2c2416;
+      color: #f0e8d8;
+      border-color: #2c2416;
+    }
+
+    /* Footer */
+    .lm-footer {
+      text-align: center;
+      padding: 1.5rem 1rem;
+      font-size: 0.75rem;
+      color: #a09585;
+      border-top: 1px solid #d4cbb8;
+      margin-top: 2rem;
+    }
+
+    /* Error */
+    .lm-error {
+      background: #fff0f0;
+      border: 1px solid #e8c0c0;
+      color: #8b3030;
+      border-radius: 6px;
+      padding: 1rem;
+      margin: 1rem 0;
+      font-size: 0.9rem;
+    }
+
+    /* Loader dots */
+    .lm-loading-dots::after {
+      content: '';
+      animation: dots 1.5s steps(4, end) infinite;
+    }
+    @keyframes dots {
+      0% { content: ''; }
+      25% { content: '.'; }
+      50% { content: '..'; }
+      75% { content: '...'; }
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+
+  <script type="text/babel">
+    const { useState, useEffect, useCallback, useRef } = React;
+
+    // ─── Constants ─────────────────────────────────────────────
+    const SEFARIA_BASE = "https://www.sefaria.org/api/v3/texts/";
+    const PART_I_COUNT = 286;
+    const PART_II_COUNT = 125;
+    const DAYS_IN_YEAR = 365;
+
+    // ─── Helpers ───────────────────────────────────────────────
+    function stripHtml(html) {
+      if (!html) return "";
+      if (typeof html !== "string") return String(html);
+      const d = document.createElement("div");
+      d.innerHTML = html;
+      return d.textContent || "";
+    }
+
+    function flattenText(data) {
+      if (!data) return "";
+      if (typeof data === "string") return stripHtml(data);
+      if (Array.isArray(data)) return data.map(flattenText).join("\n");
+      return "";
+    }
+
+    function flattenToSegments(data) {
+      if (!data) return [];
+      if (typeof data === "string") return [data];
+      if (Array.isArray(data)) return data.flatMap(flattenToSegments);
+      return [];
+    }
+
+    function formatRef(t) {
+      return t.part === 2 ? `Part II, Torah ${t.num}` : `Torah ${t.num}`;
+    }
+
+    function sefariaApiRef(t) {
+      return t.part === 2
+        ? `Likutei_Moharan,_Part_II.${t.num}`
+        : `Likutei_Moharan.${t.num}`;
+    }
+
+    function sefariaUrl(t) {
+      return t.part === 2
+        ? `https://www.sefaria.org/Likutei_Moharan%2C_Part_II.${t.num}`
+        : `https://www.sefaria.org/Likutei_Moharan.${t.num}`;
+    }
+
+    // ─── Schedule Builder ──────────────────────────────────────
+    function buildDailySchedule(lengths) {
+      const totalChars = lengths.reduce((s, t) => s + t.chars, 0);
+      const targetPerDay = totalChars / DAYS_IN_YEAR;
+
+      const days = [];
+      let bucket = [];
+      let bucketChars = 0;
+
+      for (let i = 0; i < lengths.length; i++) {
+        const torah = lengths[i];
+        bucket.push(torah);
+        bucketChars += torah.chars;
+
+        const remainingDays = DAYS_IN_YEAR - days.length - 1;
+        const remainingTorahs = lengths.length - i - 1;
+
+        if (remainingDays > 0 && remainingTorahs > 0 && bucketChars >= targetPerDay * 0.65) {
+          days.push({ torahs: [...bucket], chars: bucketChars });
+          bucket = [];
+          bucketChars = 0;
+        }
+      }
+      if (bucket.length > 0) {
+        if (days.length < DAYS_IN_YEAR) {
+          days.push({ torahs: [...bucket], chars: bucketChars });
+        } else {
+          days[days.length - 1].torahs.push(...bucket);
+          days[days.length - 1].chars += bucketChars;
+        }
+      }
+
+      // Pad to 365 by splitting largest multi-Torah days
+      while (days.length < DAYS_IN_YEAR) {
+        let maxIdx = -1, maxChars = 0;
+        for (let i = 0; i < days.length; i++) {
+          if (days[i].torahs.length > 1 && days[i].chars > maxChars) {
+            maxIdx = i;
+            maxChars = days[i].chars;
+          }
+        }
+        if (maxIdx === -1) break;
+
+        const d = days[maxIdx];
+        const mid = Math.ceil(d.torahs.length / 2);
+        const a = d.torahs.slice(0, mid);
+        const b = d.torahs.slice(mid);
+        days.splice(maxIdx, 1,
+          { torahs: a, chars: a.reduce((s, t) => s + t.chars, 0) },
+          { torahs: b, chars: b.reduce((s, t) => s + t.chars, 0) }
+        );
+      }
+
+      // Trim to 365
+      while (days.length > DAYS_IN_YEAR) {
+        const last = days.pop();
+        days[days.length - 1].torahs.push(...last.torahs);
+        days[days.length - 1].chars += last.chars;
+      }
+
+      return days;
+    }
+
+    // ─── App ───────────────────────────────────────────────────
+    function App() {
+      const [phase, setPhase] = useState("init");
+      const [schedule, setSchedule] = useState(null);
+      const [currentDay, setCurrentDay] = useState(0);
+      const [readingText, setReadingText] = useState(null);
+      const [loadingText, setLoadingText] = useState(false);
+      const [progress, setProgress] = useState({ done: 0, total: 0, current: "" });
+      const [startDate, setStartDate] = useState(null);
+      const [error, setError] = useState(null);
+      const [completed, setCompleted] = useState(() => {
+        try { return JSON.parse(localStorage.getItem("lm_completed") || "{}"); } catch { return {}; }
+      });
+      const [speaking, setSpeaking] = useState(false);
+      const [speechPaused, setSpeechPaused] = useState(false);
+      const [speechRate, setSpeechRate] = useState(() => {
+        try { return parseFloat(localStorage.getItem("lm_speech_rate") || "0.9"); } catch { return 0.9; }
+      });
+      const speechRef = useRef(null);
+
+      // Stop speech when navigating away from reading
+      useEffect(() => {
+        if (phase !== "reading") {
+          window.speechSynthesis.cancel();
+          setSpeaking(false);
+          setSpeechPaused(false);
+        }
+      }, [phase]);
+
+      // Speech functions
+      const startSpeech = useCallback(() => {
+        if (!readingText) return;
+        window.speechSynthesis.cancel();
+
+        const allText = readingText.map(torah => {
+          const title = torah.title;
+          const body = torah.segments.map(seg => {
+            const d = document.createElement("div");
+            d.innerHTML = seg;
+            return d.textContent || "";
+          }).join(". ");
+          return title + ". " + body;
+        }).join(". . . ");
+
+        // Split into chunks under 200 chars (iOS Safari has utterance length limits)
+        const sentences = allText.match(/[^.!?]+[.!?]+/g) || [allText];
+        const chunks = [];
+        let current = "";
+        for (const s of sentences) {
+          if ((current + s).length > 180 && current) {
+            chunks.push(current);
+            current = s;
+          } else {
+            current += s;
+          }
+        }
+        if (current) chunks.push(current);
+
+        speechRef.current = { chunks, index: 0 };
+
+        function speakNext() {
+          const ref = speechRef.current;
+          if (!ref || ref.index >= ref.chunks.length) {
+            setSpeaking(false);
+            setSpeechPaused(false);
+            return;
+          }
+          const utter = new SpeechSynthesisUtterance(ref.chunks[ref.index]);
+          utter.rate = speechRate;
+          utter.onend = () => {
+            ref.index++;
+            speakNext();
+          };
+          utter.onerror = () => {
+            ref.index++;
+            speakNext();
+          };
+          window.speechSynthesis.speak(utter);
+        }
+
+        setSpeaking(true);
+        setSpeechPaused(false);
+        speakNext();
+      }, [readingText, speechRate]);
+
+      const toggleSpeech = useCallback(() => {
+        if (!speaking) {
+          startSpeech();
+        } else if (speechPaused) {
+          window.speechSynthesis.resume();
+          setSpeechPaused(false);
+        } else {
+          window.speechSynthesis.pause();
+          setSpeechPaused(true);
+        }
+      }, [speaking, speechPaused, startSpeech]);
+
+      const stopSpeech = useCallback(() => {
+        window.speechSynthesis.cancel();
+        speechRef.current = null;
+        setSpeaking(false);
+        setSpeechPaused(false);
+      }, []);
+
+      const changeRate = useCallback((newRate) => {
+        setSpeechRate(newRate);
+        localStorage.setItem("lm_speech_rate", String(newRate));
+        // If currently speaking, restart at new rate
+        if (speaking) {
+          window.speechSynthesis.cancel();
+          // Small delay then restart
+          setTimeout(() => startSpeech(), 100);
+        }
+      }, [speaking, startSpeech]);
+
+      // Init: check cache
+      useEffect(() => {
+        try {
+          const cached = localStorage.getItem("lm_schedule");
+          const savedStart = localStorage.getItem("lm_start");
+          if (cached && savedStart) {
+            const data = JSON.parse(cached);
+            setSchedule(data);
+            setStartDate(new Date(savedStart));
+            const diff = Math.floor((new Date() - new Date(savedStart)) / 86400000);
+            setCurrentDay(Math.max(0, Math.min(diff, DAYS_IN_YEAR - 1)));
+            setPhase("schedule");
+          }
+        } catch { /* fresh start */ }
+      }, []);
+
+      // Fetch all Torah lengths
+      const startBuild = useCallback(async () => {
+        setPhase("loading");
+        setError(null);
+        const total = PART_I_COUNT + PART_II_COUNT;
+        setProgress({ done: 0, total, current: "Starting..." });
+
+        const lengths = [];
+        let failures = 0;
+
+        async function fetchTorah(part, num) {
+          const ref = part === 1
+            ? `Likutei_Moharan.${num}`
+            : `Likutei_Moharan,_Part_II.${num}`;
+          try {
+            const r = await fetch(`${SEFARIA_BASE}${ref}?version=english`);
+            if (r.ok) {
+              const d = await r.json();
+              const text = d.versions?.[0]?.text;
+              return { part, num, chars: flattenText(text).length || 200 };
+            }
+            failures++;
+            return { part, num, chars: 500 };
+          } catch {
+            failures++;
+            return { part, num, chars: 500 };
+          }
+        }
+
+        // Fetch in batches of 8 for speed
+        const allRefs = [];
+        for (let i = 1; i <= PART_I_COUNT; i++) allRefs.push({ part: 1, num: i });
+        for (let i = 1; i <= PART_II_COUNT; i++) allRefs.push({ part: 2, num: i });
+
+        const batchSize = 8;
+        for (let i = 0; i < allRefs.length; i += batchSize) {
+          const batch = allRefs.slice(i, i + batchSize);
+          const label = batch[0].part === 1
+            ? `Part I, Torah ${batch[0].num}`
+            : `Part II, Torah ${batch[0].num}`;
+          setProgress({ done: lengths.length, total, current: label });
+
+          const results = await Promise.all(
+            batch.map(r => fetchTorah(r.part, r.num))
+          );
+          lengths.push(...results);
+
+          // Small delay every few batches
+          if ((i / batchSize) % 3 === 0) await new Promise(r => setTimeout(r, 100));
+        }
+
+        if (failures > total * 0.5) {
+          setError("Too many failures fetching from Sefaria. Check your internet connection and try again.");
+          setPhase("init");
+          return;
+        }
+
+        const days = buildDailySchedule(lengths);
+        const now = new Date();
+        now.setHours(0, 0, 0, 0);
+
+        try {
+          localStorage.setItem("lm_schedule", JSON.stringify(days));
+          localStorage.setItem("lm_start", now.toISOString());
+        } catch (e) {
+          console.warn("localStorage full", e);
+        }
+
+        setSchedule(days);
+        setStartDate(now);
+        setCurrentDay(0);
+        setPhase("schedule");
+      }, []);
+
+      // Load text for a specific day
+      const loadDay = useCallback(async (idx) => {
+        if (!schedule || !schedule[idx]) return;
+        setLoadingText(true);
+        setReadingText(null);
+        setCurrentDay(idx);
+        setPhase("reading");
+
+        const texts = [];
+        for (const torah of schedule[idx].torahs) {
+          try {
+            const ref = sefariaApiRef(torah);
+            const r = await fetch(`${SEFARIA_BASE}${ref}?version=english`);
+            if (r.ok) {
+              const d = await r.json();
+              texts.push({
+                ...torah,
+                title: formatRef(torah),
+                url: sefariaUrl(torah),
+                segments: flattenToSegments(d.versions?.[0]?.text),
+              });
+            } else {
+              texts.push({ ...torah, title: formatRef(torah), url: sefariaUrl(torah), segments: ["[Text unavailable — view on Sefaria]"] });
+            }
+          } catch {
+            texts.push({ ...torah, title: formatRef(torah), url: sefariaUrl(torah), segments: ["[Error loading text]"] });
+          }
+        }
+        setReadingText(texts);
+        setLoadingText(false);
+      }, [schedule]);
+
+      const toggleDone = (idx) => {
+        setCompleted(prev => {
+          const next = { ...prev };
+          if (next[idx]) delete next[idx]; else next[idx] = true;
+          localStorage.setItem("lm_completed", JSON.stringify(next));
+          return next;
+        });
+      };
+
+      const resetAll = () => {
+        if (!confirm("This will erase your schedule and progress. Continue?")) return;
+        localStorage.removeItem("lm_schedule");
+        localStorage.removeItem("lm_start");
+        localStorage.removeItem("lm_completed");
+        setSchedule(null); setStartDate(null); setCompleted({}); setPhase("init");
+      };
+
+      // Progress-based: "today" = first uncompleted day
+      const todayIdx = (() => {
+        if (!schedule) return 0;
+        for (let i = 0; i < DAYS_IN_YEAR; i++) {
+          if (!completed[i]) return i;
+        }
+        return DAYS_IN_YEAR - 1; // all done!
+      })();
+
+      const completedCount = Object.keys(completed).length;
+
+      return (
+        <div>
+          {/* Header */}
+          <header className="lm-header">
+            <div className="lm-header-inner">
+              <h1 className="lm-title">לקוטי מוהר״ן</h1>
+              <p className="lm-subtitle">Likutei Moharan · Daily Learning</p>
+              {schedule && (
+                <div className="lm-header-nav">
+                  <button className="lm-nav-btn" onClick={() => { setPhase("schedule"); setReadingText(null); }}>Schedule</button>
+                  <button className="lm-nav-btn active" onClick={() => loadDay(todayIdx)}>Continue</button>
+                </div>
+              )}
+            </div>
+          </header>
+
+          <main className="lm-main">
+            {/* ─── INIT ─────────────────────────────── */}
+            {phase === "init" && (
+              <div className="lm-card">
+                <div className="lm-init-icon">📖</div>
+                <h2 className="lm-card-title">Begin Your Learning Cycle</h2>
+                <p className="lm-card-text">
+                  This app divides the entire Likutei Moharan — all 411 Torahs of
+                  Part I and Part II — into 365 daily portions, balanced by text
+                  length so each day is roughly equal.
+                </p>
+                <p className="lm-card-text">
+                  The first time you open it, it fetches every Torah from Sefaria
+                  to measure its length. This takes 1–2 minutes, then your schedule
+                  is cached for instant access.
+                </p>
+                <p className="lm-card-small">
+                  Text: Sefaria community translation (BRI / Mykoff / Bergman)
+                </p>
+                {error && <div className="lm-error">{error}</div>}
+                <button className="lm-btn-primary" onClick={startBuild}>
+                  Start Today — Build My Schedule
+                </button>
+              </div>
+            )}
+
+            {/* ─── LOADING ──────────────────────────── */}
+            {phase === "loading" && (
+              <div className="lm-card">
+                <h2 className="lm-card-title">Building Your Schedule</h2>
+                <p className="lm-card-text">
+                  Fetching {progress.total} Torahs from Sefaria<span className="lm-loading-dots"></span>
+                </p>
+                <div className="lm-progress-outer">
+                  <div className="lm-progress-inner" style={{ width: `${(progress.done / Math.max(progress.total, 1)) * 100}%` }} />
+                </div>
+                <p className="lm-progress-label">{progress.done} / {progress.total} — {progress.current}</p>
+              </div>
+            )}
+
+            {/* ─── SCHEDULE ─────────────────────────── */}
+            {phase === "schedule" && schedule && (
+              <div>
+                <div className="lm-stats">
+                  <div className="lm-stat">
+                    <span className="lm-stat-num">{completedCount}</span>
+                    <span className="lm-stat-label">Completed</span>
+                  </div>
+                  <div className="lm-stat">
+                    <span className="lm-stat-num">{DAYS_IN_YEAR - completedCount}</span>
+                    <span className="lm-stat-label">Remaining</span>
+                  </div>
+                  <div className="lm-stat">
+                    <span className="lm-stat-num">{Math.round((completedCount / DAYS_IN_YEAR) * 100)}%</span>
+                    <span className="lm-stat-label">Progress</span>
+                  </div>
+                </div>
+
+                <div className="lm-today" onClick={() => loadDay(todayIdx)}>
+                  <div className="lm-today-label">Up Next — Day {todayIdx + 1}</div>
+                  <div className="lm-today-torahs">
+                    {schedule[todayIdx]?.torahs.map((t, i) => (
+                      <span key={i} className="lm-torah-chip">{formatRef(t)}</span>
+                    ))}
+                  </div>
+                  <div className="lm-today-action">Tap to read →</div>
+                </div>
+
+                <h3 className="lm-list-header">Full Schedule</h3>
+                <div className="lm-schedule-list">
+                  {schedule.map((day, idx) => {
+                    const isToday = idx === todayIdx;
+                    const isDone = completed[idx];
+                    const d = startDate ? new Date(startDate.getTime() + idx * 86400000) : null;
+                    return (
+                      <div
+                        key={idx}
+                        className={`lm-day-row${isToday ? " today" : ""}${isDone ? " done" : ""}`}
+                        onClick={() => loadDay(idx)}
+                      >
+                        <div className="lm-day-left">
+                          <span className="lm-day-num">Day {idx + 1}</span>
+                          {d && <span className="lm-day-date">{d.toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>}
+                        </div>
+                        <div className="lm-day-center">
+                          {day.torahs.map((t, i) => (
+                            <span key={i}>{t.part === 2 ? `II:${t.num}` : t.num}{i < day.torahs.length - 1 ? ", " : ""}</span>
+                          ))}
+                        </div>
+                        <div className="lm-day-right">
+                          {isDone ? <span className="lm-check">✓</span> : isToday ? <span className="lm-dot">●</span> : null}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div style={{ textAlign: "center", margin: "2rem 0" }}>
+                  <button className="lm-btn-reset" onClick={resetAll}>Reset &amp; Start Over</button>
+                </div>
+              </div>
+            )}
+
+            {/* ─── READING ──────────────────────────── */}
+            {phase === "reading" && (
+              <div>
+                <div className="lm-reading-nav">
+                  <button className="lm-nav-arrow" disabled={currentDay <= 0} onClick={() => loadDay(currentDay - 1)}>← Prev</button>
+                  <span className="lm-reading-day">Day {currentDay + 1} of {DAYS_IN_YEAR}</span>
+                  <button className="lm-nav-arrow" disabled={currentDay >= DAYS_IN_YEAR - 1} onClick={() => loadDay(currentDay + 1)}>Next →</button>
+                </div>
+
+                {/* Audio controls */}
+                {readingText && (
+                  <div className="lm-audio-bar">
+                    <button className="lm-audio-btn" onClick={toggleSpeech}>
+                      {!speaking ? "▶ Listen" : speechPaused ? "▶ Resume" : "⏸ Pause"}
+                    </button>
+                    {speaking && (
+                      <button className="lm-audio-btn lm-audio-stop" onClick={stopSpeech}>⏹ Stop</button>
+                    )}
+                    <div className="lm-speed-control">
+                      <span className="lm-speed-label">Speed:</span>
+                      {[0.7, 0.85, 1.0, 1.2].map(r => (
+                        <button
+                          key={r}
+                          className={`lm-speed-btn${Math.abs(speechRate - r) < 0.01 ? " active" : ""}`}
+                          onClick={() => changeRate(r)}
+                        >
+                          {r === 1.0 ? "1x" : r + "x"}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {loadingText && (
+                  <div className="lm-card">
+                    <p className="lm-card-text">Loading today's learning<span className="lm-loading-dots"></span></p>
+                  </div>
+                )}
+
+                {readingText && readingText.map((torah, tIdx) => (
+                  <div key={tIdx} className="lm-reading-card">
+                    <h2 className="lm-reading-title">{torah.title}</h2>
+                    <a href={torah.url} target="_blank" rel="noreferrer" className="lm-sefaria-link">View on Sefaria ↗</a>
+                    <div className="lm-reading-body">
+                      {torah.segments.map((seg, sIdx) => (
+                        <p key={sIdx} dangerouslySetInnerHTML={{ __html: seg }} />
+                      ))}
+                    </div>
+                  </div>
+                ))}
+
+                {readingText && (
+                  <div style={{ textAlign: "center", margin: "1.5rem 0" }}>
+                    <button
+                      className={`lm-btn-primary${completed[currentDay] ? " completed" : ""}`}
+                      onClick={() => toggleDone(currentDay)}
+                    >
+                      {completed[currentDay] ? "✓ Completed" : "Mark as Complete"}
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </main>
+
+          <footer className="lm-footer">
+            <p>Text from Sefaria · BRI Translation</p>
+            <p>For personal study use</p>
+          </footer>
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+  </script>
+</body>
+</html>
